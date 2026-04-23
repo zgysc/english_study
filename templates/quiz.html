@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>练习 - {{ level_name }} | SpeakEasy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .word-input {
+            border-bottom: 2px solid #cbd5e1;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: transparent;
+            outline: none;
+            font-size: 1.1rem;
+            padding: 4px 4px;
+            color: #1e293b;
+            width: 4ch;          /* 最小宽度，JS会根据单词长度覆盖 */
+            min-width: 2.5ch;    /* 绝对最小宽度，防止过窄 */
+            box-sizing: content-box;
+        }
+        .word-input:focus {
+            border-bottom-color: #667eea;
+        }
+        .word-input.correct {
+            border-bottom-color: #22c55e;
+            color: #16a34a;
+            background: #f0fdf4;
+            border-radius: 6px 6px 0 0;
+        }
+        .word-input.wrong {
+            border-bottom-color: #ef4444;
+            color: #dc2626;
+            background: #fef2f2;
+            border-radius: 6px 6px 0 0;
+            animation: shake 0.5s ease;
+        }
+        .word-input.show-answer {
+            border-bottom-color: #f59e0b;
+            color: #d97706;
+            background: #fffbeb;
+            border-radius: 6px 6px 0 0;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.4s ease; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-up { animation: slideUp 0.5s ease; }
+
+        .toast {
+            animation: slideUp 0.3s ease;
+        }
+
+        .punctuation {
+            color: #64748b;
+            font-size: 1.1rem;
+            padding: 4px 2px;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        /* 彩蛋动画 */
+        .easter-egg-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease;
+            pointer-events: none;
+        }
+        .easter-egg-content {
+            text-align: center;
+            animation: easterEggPop 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .easter-egg-kiss {
+            font-size: 6rem;
+            display: inline-block;
+            animation: kissFloat 1.5s ease-in-out infinite;
+        }
+        .easter-egg-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 16px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            animation: fadeIn 0.5s ease 0.3s both;
+        }
+        .easter-egg-hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .easter-egg-heart {
+            position: absolute;
+            font-size: 2rem;
+            animation: heartRise 2s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes easterEggPop {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            60% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        @keyframes kissFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-15px) scale(1.1); }
+        }
+        @keyframes heartRise {
+            0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translateY(-300px) scale(1.2) rotate(30deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                </svg>
+                <span class="text-lg font-bold">SpeakEasy</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">{{ level_name }}</span>
+                <a href="/" class="text-sm opacity-80 hover:opacity-100 transition-opacity">切换级别</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 统计栏 -->
+    <div class="bg-white border-b">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-6 text-sm">
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-400">已答</span>
+                    <span id="stat-total" class="font-bold text-gray-700">0</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <span class="text-green-500">✓</span>
+                    <span id="stat-correct" class="font-bold text-green-600">0</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <span class="text-red-500">✗</span>
+                    <span id="stat-wrong" class="font-bold text-red-600">0</span>
+                </div>
+            </div>
+            <div id="stat-rate" class="text-sm text-gray-400">正确率 --</div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 加载状态 -->
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-500">正在加载题目...</p>
+        </div>
+
+        <!-- 答题区域 -->
+        <div id="quiz-area" class="hidden">
+            <!-- 中文题目 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-6 slide-up">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-medium text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">中文原句</span>
+                    <span id="word-count" class="text-xs text-gray-400"></span>
+                </div>
+                <p id="chinese-sentence" class="text-xl sm:text-2xl text-gray-800 leading-relaxed font-medium"></p>
+            </div>
+
+            <!-- 填空区域 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-6 slide-up" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between mb-6">
+                    <span class="text-xs font-medium text-purple-500 bg-purple-50 px-3 py-1 rounded-full">英文翻译</span>
+                    <span id="attempt-info" class="text-xs text-gray-400"></span>
+                </div>
+
+                <!-- 答案输入区 -->
+                <div id="answer-area" class="flex flex-wrap items-center gap-x-1.5 gap-y-3 mb-6 min-h-[60px] p-4 bg-gray-50 rounded-xl overflow-x-auto">
+                    <!-- 动态生成的输入框和标点 -->
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="btn-submit" onclick="submitAnswer()"
+                        class="btn-primary text-white font-medium py-3 px-8 rounded-xl flex items-center justify-center space-x-2">
+                        <span>提交答案</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                    </button>
+                    <button id="btn-hint" onclick="showHint()"
+                        class="btn-secondary border border-gray-200 text-gray-600 font-medium py-3 px-6 rounded-xl flex items-center justify-center space-x-2">
+                        <span>💡 提示</span>
+                    </button>
+                    <button id="btn-speak" onclick="speakAnswer()"
+                        class="btn-secondary border border-gray-200 text-gray-600 font-medium py-3 px-6 rounded-xl flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.95 6.05a8 8 0 010 11.9M6.5 8.788v6.424a.5.5 0 00.757.429l4.986-3.212a.5.5 0 000-.858L7.257 8.36a.5.5 0 00-.757.429z"/>
+                        </svg>
+                        <span>🔊 语音</span>
+                    </button>
+                    <button id="btn-next" onclick="nextQuestion()"
+                        class="btn-secondary border border-gray-200 text-gray-600 font-medium py-3 px-6 rounded-xl flex items-center justify-center space-x-2">
+                        <span>下一题</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 反馈区域 -->
+            <div id="feedback" class="hidden rounded-2xl shadow-md p-6 slide-up">
+                <!-- 动态反馈内容 -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 状态管理
+        let currentQuestion = null;
+        let attempt = 0;
+        let isAnswered = false;
+        let stats = { total: 0, correct: 0, wrong: 0 };
+        let consecutiveCorrect = 0;  // 连续答对计数
+        const level = '{{ level }}';
+
+        // 页面加载时获取第一道题
+        document.addEventListener('DOMContentLoaded', () => {
+            loadQuestion();
+        });
+
+        // 加载新题目
+        async function loadQuestion() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('quiz-area').classList.add('hidden');
+            document.getElementById('feedback').classList.add('hidden');
+
+            try {
+                const resp = await fetch(`/api/question?level=${level}`);
+                const data = await resp.json();
+
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    return;
+                }
+
+                currentQuestion = data;
+                attempt = 0;
+                isAnswered = false;
+
+                // 更新UI
+                document.getElementById('chinese-sentence').textContent = data.chinese;
+                document.getElementById('word-count').textContent = `共 ${data.word_count} 个单词`;
+                document.getElementById('attempt-info').textContent = '';
+
+                // 构建输入区域
+                buildInputArea(data.tokens);
+
+                // 显示答题区
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('quiz-area').classList.remove('hidden');
+
+                // 重置按钮状态
+                document.getElementById('btn-submit').classList.remove('hidden');
+                document.getElementById('btn-hint').classList.remove('hidden');
+
+                // 聚焦第一个输入框
+                setTimeout(() => {
+                    const firstInput = document.querySelector('.word-input');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+
+            } catch (err) {
+                showToast('加载题目失败，请重试', 'error');
+            }
+        }
+
+        // 构建输入区域
+        function buildInputArea(tokens) {
+            const area = document.getElementById('answer-area');
+            area.innerHTML = '';
+
+            tokens.forEach((token, idx) => {
+                const answer = token.answer || token.display.replace(/[.,!?;:'"]/g, '').replace(/^'+|'+$/g, '');
+                const charWidth = answer.length; // 单词字符数
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'word-input';
+                input.dataset.index = idx;
+                input.dataset.answer = answer;
+                // 动态宽度：单词长度 + 额外2ch作为输入余量，至少4ch
+                input.style.width = Math.max(charWidth + 2, 4) + 'ch';
+                input.setAttribute('autocomplete', 'off');
+                input.setAttribute('autocorrect', 'off');
+                input.setAttribute('autocapitalize', 'off');
+                input.setAttribute('spellcheck', 'false');
+
+                // 按Enter跳到下一个输入框
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const inputs = document.querySelectorAll('.word-input');
+                        const currentIdx = Array.from(inputs).indexOf(e.target);
+                        if (currentIdx < inputs.length - 1) {
+                            inputs[currentIdx + 1].focus();
+                        } else {
+                            submitAnswer();
+                        }
+                    }
+                });
+
+                area.appendChild(input);
+            });
+        }
+
+        // 提交答案
+        async function submitAnswer() {
+            if (isAnswered) return;
+
+            const inputs = document.querySelectorAll('.word-input');
+            const userWords = [];
+            let allFilled = true;
+
+            inputs.forEach(input => {
+                const val = input.value.trim();
+                if (!val) {
+                    allFilled = false;
+                    input.classList.add('wrong');
+                    setTimeout(() => input.classList.remove('wrong'), 1000);
+                }
+                userWords.push(val);
+            });
+
+            if (!allFilled) {
+                showToast('请填写所有空缺的单词', 'warning');
+                return;
+            }
+
+            const userAnswer = userWords.join(' ');
+            attempt++;
+
+            try {
+                const resp = await fetch('/api/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        answer: userAnswer,
+                        correct_answer: currentQuestion.english,
+                        attempt: attempt
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (result.is_correct) {
+                    handleCorrect(inputs);
+                } else if (result.show_answer) {
+                    handleShowAnswer(inputs, result.correct_answer);
+                } else {
+                    handleWrong(inputs, result.attempt);
+                }
+
+            } catch (err) {
+                showToast('提交失败，请重试', 'error');
+            }
+        }
+
+        // 处理正确答案
+        function handleCorrect(inputs) {
+            isAnswered = true;
+            inputs.forEach(input => {
+                input.classList.add('correct');
+                input.disabled = true;
+            });
+
+            stats.total++;
+            stats.correct++;
+            consecutiveCorrect++;
+            updateStats();
+
+            showFeedback('success', '🎉 回答正确！', currentQuestion.english);
+
+            document.getElementById('btn-submit').classList.add('hidden');
+            document.getElementById('btn-hint').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+
+            // 连续答对3题触发彩蛋
+            if (consecutiveCorrect >= 3) {
+                consecutiveCorrect = 0;
+                setTimeout(() => showEasterEgg(), 600);
+            }
+        }
+
+        // 处理错误答案（重置连续答对计数）
+        function handleWrong(inputs, currentAttempt) {
+            consecutiveCorrect = 0;
+            inputs.forEach(input => {
+                input.classList.add('wrong');
+                setTimeout(() => input.classList.remove('wrong'), 800);
+            });
+
+            const remaining = 3 - currentAttempt;
+            document.getElementById('attempt-info').textContent = `还剩 ${remaining} 次机会`;
+            document.getElementById('attempt-info').classList.add('text-amber-600', 'font-medium');
+
+            showFeedback('warning', `❌ 不正确`, `还有 ${remaining} 次机会，再试一次吧！`);
+        }
+
+        // 显示正确答案
+        function handleShowAnswer(inputs, answer) {
+            isAnswered = true;
+
+            // 显示正确答案
+            const tokens = currentQuestion.tokens;
+            tokens.forEach((token, i) => {
+                const input = document.querySelector(`.word-input[data-index="${i}"]`);
+                if (input) {
+                    input.value = token.answer || token.display;
+                    input.classList.add('show-answer');
+                    input.disabled = true;
+                }
+            });
+
+            stats.total++;
+            stats.wrong++;
+            updateStats();
+
+            showFeedback('answer', '📖 正确答案', answer);
+
+            document.getElementById('btn-submit').classList.add('hidden');
+            document.getElementById('btn-hint').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+
+        // 显示完整答案
+        function showHint() {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            // 填入正确答案
+            const inputs = document.querySelectorAll('.word-input');
+            const tokens = currentQuestion.tokens;
+            tokens.forEach((token, i) => {
+                const input = document.querySelector(`.word-input[data-index="${i}"]`);
+                if (input) {
+                    input.value = token.answer || token.display;
+                    input.classList.add('show-answer');
+                    input.disabled = true;
+                }
+            });
+
+            // 更新统计（查看答案算作错误）
+            stats.total++;
+            stats.wrong++;
+            consecutiveCorrect = 0;
+            updateStats();
+
+            // 显示答案反馈
+            showFeedback('answer', '📖 正确答案', currentQuestion.english);
+
+            document.getElementById('btn-submit').classList.add('hidden');
+            document.getElementById('btn-hint').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+
+        // 语音朗读正确答案（双模式：在线TTS优先 → 本地音频降级）
+        let currentAudio = null;
+
+        function speakAnswer() {
+            if (!currentQuestion || !currentQuestion.english) return;
+
+            // 停止上一次播放
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            const btn = document.getElementById('btn-speak');
+            const originalHTML = btn.innerHTML;
+            setSpeakBtnLoading(btn);
+
+            const text = currentQuestion.english;
+            // 优先尝试在线TTS（百度翻译，高质量）
+            const onlineUrl = `/api/speak?text=${encodeURIComponent(text)}`;
+            playWithFallback(btn, originalHTML, onlineUrl, 0);
+        }
+
+        function playWithFallback(btn, originalHTML, url, retryCount) {
+            const audio = new Audio();
+            currentAudio = audio;
+            let settled = false;
+
+            // 超时保护：3秒内未开始播放则降级
+            const timeout = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                audio.pause();
+                audio.src = '';
+                fallbackToLocal(btn, originalHTML, retryCount);
+            }, 3000);
+
+            audio.oncanplaythrough = () => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
+            };
+
+            audio.onended = () => {
+                settled = true;
+                clearTimeout(timeout);
+                resetSpeakBtn(btn, originalHTML);
+            };
+
+            audio.onerror = () => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
+                fallbackToLocal(btn, originalHTML, retryCount);
+            };
+
+            audio.src = url;
+            audio.play().catch(() => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
+                fallbackToLocal(btn, originalHTML, retryCount);
+            });
+        }
+
+        function fallbackToLocal(btn, originalHTML, retryCount) {
+            if (retryCount >= 1) {
+                // 已重试过，直接报错
+                resetSpeakBtn(btn, originalHTML);
+                showToast('语音播放失败，请检查网络连接', 'error');
+                return;
+            }
+
+            // 降级到本地预生成的音频文件
+            if (currentQuestion.audio_id) {
+                const parts = currentQuestion.audio_id.split('_');
+                const level = parts[0];
+                const localUrl = `/api/audio/${level}/${currentQuestion.audio_id}.mp3`;
+                playWithFallback(btn, originalHTML, localUrl, retryCount + 1);
+            } else {
+                resetSpeakBtn(btn, originalHTML);
+                showToast('语音播放失败', 'error');
+            }
+        }
+
+        function setSpeakBtnLoading(btn) {
+            btn.innerHTML = '<svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.95 6.05a8 8 0 010 11.9M6.5 8.788v6.424a.5.5 0 00.757.429l4.986-3.212a.5.5 0 000-.858L7.257 8.36a.5.5 0 00-.757.429z"/></svg><span>播放中...</span>';
+            btn.classList.add('border-indigo-300', 'text-indigo-600');
+            btn.disabled = true;
+        }
+
+        function resetSpeakBtn(btn, originalHTML) {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('border-indigo-300', 'text-indigo-600');
+            btn.disabled = false;
+            currentAudio = null;
+        }
+
+        // 显示反馈信息
+        function showFeedback(type, title, message) {
+            const feedback = document.getElementById('feedback');
+            feedback.classList.remove('hidden');
+
+            const styles = {
+                success: 'bg-green-50 border-green-200',
+                warning: 'bg-amber-50 border-amber-200',
+                answer: 'bg-blue-50 border-blue-200',
+                error: 'bg-red-50 border-red-200'
+            };
+
+            feedback.className = `rounded-2xl shadow-md p-6 slide-up border ${styles[type] || styles.error}`;
+            feedback.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-800 mb-1">${title}</h4>
+                        <p class="text-gray-600 text-lg font-mono">${message}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 显示Toast提示
+        function showToast(message, type = 'info') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const colors = {
+                info: 'bg-blue-500',
+                warning: 'bg-amber-500',
+                error: 'bg-red-500',
+                success: 'bg-green-500'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast fixed top-20 left-1/2 transform -translate-x-1/2 ${colors[type]} text-white px-6 py-3 rounded-xl shadow-lg z-50 text-sm font-medium`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        // 连续答对3题彩蛋
+        function showEasterEgg() {
+            const overlay = document.createElement('div');
+            overlay.className = 'easter-egg-overlay';
+            overlay.innerHTML = `
+                <div class="easter-egg-hearts" id="easter-hearts"></div>
+                <div class="easter-egg-content">
+                    <div class="easter-egg-kiss">😘💋</div>
+                    <div class="easter-egg-text">连续答对3题，太棒了！</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // 飘心动画
+            const heartsContainer = document.getElementById('easter-hearts');
+            const hearts = ['❤️', '💕', '💖', '💗', '💓', '💘', '💝', '🩷'];
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('span');
+                    heart.className = 'easter-egg-heart';
+                    heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                    heart.style.left = Math.random() * 100 + '%';
+                    heart.style.bottom = '-10%';
+                    heart.style.animationDelay = Math.random() * 0.3 + 's';
+                    heart.style.fontSize = (1.5 + Math.random() * 1.5) + 'rem';
+                    heartsContainer.appendChild(heart);
+                }, i * 120);
+            }
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.5s ease';
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 500);
+            }, 3000);
+        }
+
+        // 更新统计
+        function updateStats() {
+            document.getElementById('stat-total').textContent = stats.total;
+            document.getElementById('stat-correct').textContent = stats.correct;
+            document.getElementById('stat-wrong').textContent = stats.wrong;
+
+            if (stats.total > 0) {
+                const rate = Math.round((stats.correct / stats.total) * 100);
+                document.getElementById('stat-rate').textContent = `正确率 ${rate}%`;
+            }
+        }
+
+        // 下一题
+        function nextQuestion() {
+            // 停止正在播放的语音
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            // 重置语音按钮状态
+            const btn = document.getElementById('btn-speak');
+            btn.disabled = false;
+            btn.classList.remove('border-indigo-300', 'text-indigo-600');
+            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.95 6.05a8 8 0 010 11.9M6.5 8.788v6.424a.5.5 0 00.757.429l4.986-3.212a.5.5 0 000-.858L7.257 8.36a.5.5 0 00-.757.429z"/></svg><span>🔊 语音</span>';
+
+            loadQuestion();
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'n' && e.ctrlKey) {
+                e.preventDefault();
+                nextQuestion();
+            }
+        });
+    </script>
+</body>
+</html>

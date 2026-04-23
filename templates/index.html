@@ -1,1 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语口语练习 - 汉译英填空</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .gradient-cet6 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .gradient-ielts { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .gradient-toefl { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                </svg>
+                <h1 class="text-xl font-bold tracking-wide">SpeakEasy</h1>
+            </div>
+            <span class="text-sm opacity-80 hidden sm:inline">汉译英口语练习</span>
+        </div>
+    </nav>
 
+    <!-- 主内容区 -->
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        <!-- 欢迎区域 -->
+        <div class="text-center mb-12">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">选择练习级别</h2>
+            <p class="text-gray-500 text-lg max-w-2xl mx-auto">
+                看到中文句子，尝试用英语表达出来。填入每个单词，完成完整的英文翻译。
+            </p>
+        </div>
+
+        <!-- 级别卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <!-- 英语六级 -->
+            <a href="/quiz?level=cet6" class="card-hover block rounded-2xl overflow-hidden shadow-lg">
+                <div class="gradient-cet6 p-6 text-white">
+                    <div class="text-4xl mb-3">📚</div>
+                    <h3 class="text-xl font-bold mb-2">英语六级</h3>
+                    <p class="text-sm opacity-90">CET-6</p>
+                </div>
+                <div class="bg-white p-5">
+                    <p class="text-gray-600 text-sm mb-3">适合大学生，涵盖日常生活、社会热点等话题。</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">25 道题目</span>
+                        <span class="text-sm font-medium text-pink-500">开始练习 →</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 雅思 -->
+            <a href="/quiz?level=ielts" class="card-hover block rounded-2xl overflow-hidden shadow-lg">
+                <div class="gradient-ielts p-6 text-white">
+                    <div class="text-4xl mb-3">🌍</div>
+                    <h3 class="text-xl font-bold mb-2">雅思</h3>
+                    <p class="text-sm opacity-90">IELTS</p>
+                </div>
+                <div class="bg-white p-5">
+                    <p class="text-gray-600 text-sm mb-3">适合出国留学，涉及学术、社会、环境等深度话题。</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">25 道题目</span>
+                        <span class="text-sm font-medium text-blue-500">开始练习 →</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 托福 -->
+            <a href="/quiz?level=toefl" class="card-hover block rounded-2xl overflow-hidden shadow-lg">
+                <div class="gradient-toefl p-6 text-white">
+                    <div class="text-4xl mb-3">🎓</div>
+                    <h3 class="text-xl font-bold mb-2">托福</h3>
+                    <p class="text-sm opacity-90">TOEFL</p>
+                </div>
+                <div class="bg-white p-5">
+                    <p class="text-gray-600 text-sm mb-3">适合学术英语，涵盖科技、医疗、经济等专业话题。</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">25 道题目</span>
+                        <span class="text-sm font-medium text-green-500">开始练习 →</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                如何使用
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <div>
+                        <p class="font-medium text-gray-700">看中文</p>
+                        <p class="text-sm text-gray-500">阅读中文句子，理解含义</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <div>
+                        <p class="font-medium text-gray-700">填英文</p>
+                        <p class="text-sm text-gray-500">在空缺处逐个填入英文单词</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <div>
+                        <p class="font-medium text-gray-700">学表达</p>
+                        <p class="text-sm text-gray-500">3次错误后显示正确答案</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="text-center py-6 text-gray-400 text-sm">
+        <p>SpeakEasy - 英语口语练习工具 | 利用碎片时间提升英语表达能力</p>
+    </footer>
+</body>
+</html>
